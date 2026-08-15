@@ -29,7 +29,6 @@ export default function SettingsPage() {
         <HomeHeader
           title="Settings"
           showDivider
-          showLocation={true}
         />
 
         <View style={styles.card}>

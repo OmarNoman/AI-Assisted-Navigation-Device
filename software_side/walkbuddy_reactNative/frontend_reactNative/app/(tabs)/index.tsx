@@ -1,15 +1,13 @@
 // app/(tabs)/index.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   Alert,
   Animated,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -19,8 +17,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 import HomeHeader from "../HomeHeader";
-import ModelWebView from "../../src/components/ModelWebView";
-import { API_BASE } from "../../src/config";
 import { useSession } from "../../src/context/SessionContext";
 
 type DestinationType = "I" | "E";
@@ -39,10 +35,6 @@ export default function HomePage() {
 
   const greeting = `Hi ${displayName}`;
 
-  const [visionEnabled, setVisionEnabled] = useState(true);
-  const [visionPreviewOn, setVisionPreviewOn] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [rev, setRev] = useState(0);
   const [showSearch, setShowSearch] = useState(false);
   const [query, setQuery] = useState("");
   const [destinationType, setDestinationType] = useState<DestinationType | null>(null);
@@ -55,49 +47,9 @@ export default function HomePage() {
     return Math.min(max, Math.max(320, width - padding * 2));
   }, [width]);
 
-  const goToSavedPlaces = () => router.push("/places");
-  const goToFavourites = () => router.push("/favourites" as any);
-  const goToProfile = () => router.push("/profile");
   const goToEmergency = () => router.push("/emergency" as any);
+  const goToCamera = () => router.push("/camera");
 
-  const goToCameraVoice = () =>
-    router.push({ pathname: "/camera", params: { mode: "voice" } } as any);
-
-  const goToCameraOCR = () =>
-    router.push({ pathname: "/camera", params: { mode: "ocr" } } as any);
-
-  const goToScreenReader = () => {
-    const title = "Coming soon";
-    const msg = "Screen Reader is not implemented yet.";
-    Platform.OS === "web"
-      ? (globalThis as any).alert?.(`${title}\n\n${msg}`)
-      : Alert.alert(title, msg);
-  };
-
-  useEffect(() => {
-    if (!visionEnabled) {
-      setVisionPreviewOn(false);
-      setLoading(false);
-    }
-  }, [visionEnabled]);
-
-  useEffect(() => {
-    if (!visionPreviewOn) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setRev((x) => x + 1);
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
-  }, [visionPreviewOn]);
-
-  const visionUrl = `${API_BASE}/vision/?v=${rev}`;
-
-  const toggleVisionPreview = () => {
-    if (!visionEnabled) return;
-    setVisionPreviewOn((prev) => !prev);
-  };
 
   const openSearch = () => {
     setQuery("");
@@ -114,7 +66,10 @@ export default function HomePage() {
   const onPressInterior = () => {
     if (!hasDestination) return;
     if (destinationType === "E") {
-      Alert.alert("Error!", "This is an External destination");
+      Alert.alert(
+        "Try Maps instead",
+        "This looks like an outdoor destination. Use the MAPS button to navigate there."
+      );
       return;
     }
     closeSearch();
@@ -124,7 +79,10 @@ export default function HomePage() {
   const onPressMaps = () => {
     if (!hasDestination) return;
     if (destinationType === "I") {
-      Alert.alert("Error!", "This is an Internal destination");
+      Alert.alert(
+        "Try Interior instead",
+        "This looks like an indoor destination. Use the INTERIOR button to navigate there."
+      );
       return;
     }
     const destinationText = query.trim();
@@ -147,7 +105,6 @@ export default function HomePage() {
             greeting={greeting}
             appTitle="WalkBuddy"
             showDivider
-            showLocation
           />
 
           <View style={styles.mainArea}>
@@ -155,81 +112,21 @@ export default function HomePage() {
 
             <View style={styles.grid}>
               <ActionTile
-                icon="volume-up"
-                label="SCREEN READER"
-                onPress={goToScreenReader}
-              />
-              <ActionTile
-                icon="file-text"
-                label="TEXT READER"
-                onPress={goToCameraOCR}
-              />
-              <ActionTile
-                icon="microphone"
-                label="VOICE ASSIST"
-                onPress={goToCameraVoice}
-              />
-              <ActionTile
-                icon="map-marker"
-                label="PLACES"
-                onPress={goToSavedPlaces}
+                icon="camera"
+                label="Open Smart Scanner"
+                onPress={goToCamera}
+                hint="Opens the camera to detect objects and read text aloud"
               />
               <ActionTile
                 icon="exclamation-triangle"
-                label="EMERGENCY"
+                label="Click for Emergency"
                 onPress={goToEmergency}
+                emergency
+                hint="Opens emergency contact options"
               />
             </View>
           </View>
 
-          {/* VISION */}
-          <View
-            style={[
-              styles.visionWrapper,
-              visionPreviewOn && styles.visionActive,
-            ]}
-          >
-            <View style={styles.visionRow}>
-              <Text style={styles.visionTitle}>VISION ASSIST</Text>
-
-              <View style={styles.visionToggle}>
-                <Text style={styles.visionToggleText}>
-                  {visionEnabled ? "On" : "Off"}
-                </Text>
-
-                <Switch
-                  value={visionEnabled}
-                  onValueChange={setVisionEnabled}
-                  trackColor={{ false: "#23384d", true: "#2d4b66" }}
-                  thumbColor={visionEnabled ? tokens.gold : "#9aa8b6"}
-                />
-              </View>
-            </View>
-
-            <Pressable
-              onPress={toggleVisionPreview}
-              style={({ pressed }) => [
-                styles.visionCard,
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.visionInner}>
-                {visionEnabled && visionPreviewOn ? (
-                  <ModelWebView url={visionUrl} loading={loading} />
-                ) : (
-                  <View style={styles.previewPlaceholder}>
-                    <Icon name="eye" size={28} color={tokens.muted} />
-                    <Text style={styles.previewText}>
-                      {visionEnabled ? "Tap to start camera" : "Vision disabled"}
-                    </Text>
-                    <Text style={styles.previewSubtext}>
-                      Starting camera gives live surroundings
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </Pressable>
-          </View>
         </ScrollView>
       </View>
 
@@ -245,9 +142,14 @@ export default function HomePage() {
 
             {/* Header */}
             <View style={styles.modalHeader}>
-              <Icon name="search" size={18} color={tokens.gold} />
+              <Icon name="search" size={18} color={tokens.blue} />
               <Text style={styles.modalTitle}>Where to?</Text>
-              <Pressable onPress={closeSearch} hitSlop={12}>
+              <Pressable
+                onPress={closeSearch}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Close search"
+              >
                 <Icon name="times" size={20} color={tokens.muted} />
               </Pressable>
             </View>
@@ -270,9 +172,16 @@ export default function HomePage() {
                 autoCorrect={false}
                 returnKeyType="search"
                 autoFocus
+                accessibilityLabel="Destination"
+                accessibilityHint="Type a place to navigate to"
               />
               {query.length > 0 && (
-                <Pressable onPress={() => setQuery("")} hitSlop={10}>
+                <Pressable
+                  onPress={() => setQuery("")}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search text"
+                >
                   <Icon name="times-circle" size={16} color={tokens.muted} />
                 </Pressable>
               )}
@@ -281,7 +190,7 @@ export default function HomePage() {
             {/* Result preview */}
             {hasDestination && (
               <View style={styles.resultCard}>
-                <Icon name="map-marker" size={20} color={tokens.gold} />
+                <Icon name="map-marker" size={20} color={tokens.blue} />
                 <Text style={styles.resultTitle} numberOfLines={2}>
                   {query}
                 </Text>
@@ -306,17 +215,23 @@ export default function HomePage() {
                 style={[styles.modeBtn, !hasDestination && styles.modeBtnDisabled]}
                 onPress={onPressInterior}
                 disabled={!hasDestination}
+                accessibilityRole="button"
+                accessibilityLabel="Navigate using interior route"
+                accessibilityState={{ disabled: !hasDestination }}
               >
-                <Icon name="building" size={18} color={hasDestination ? tokens.gold : tokens.muted} />
+                <Icon name="building" size={18} color={hasDestination ? tokens.blue : tokens.muted} />
                 <Text style={[styles.modeBtnText, !hasDestination && styles.modeBtnTextDisabled]}>
                   INTERIOR
                 </Text>
               </Pressable>
 
               <Pressable
-                style={[styles.modeBtn, styles.modeBtnGold, !hasDestination && styles.modeBtnDisabled]}
+                style={[styles.modeBtn, styles.modeBtnblue, !hasDestination && styles.modeBtnDisabled]}
                 onPress={onPressMaps}
                 disabled={!hasDestination}
+                accessibilityRole="button"
+                accessibilityLabel="Navigate using maps route"
+                accessibilityState={{ disabled: !hasDestination }}
               >
                 <Icon name="map" size={18} color={hasDestination ? "#071a2a" : tokens.muted} />
                 <Text style={[styles.modeBtnText, hasDestination && styles.modeBtnTextDark, !hasDestination && styles.modeBtnTextDisabled]}>
@@ -375,6 +290,8 @@ function BounceButton({ label, onPress, search }: { label: string; onPress: () =
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      accessibilityRole="button"
+      accessibilityLabel="Search for a destination"
     >
       <Animated.View
         style={[styles.searchButton, { transform: [{ scale }] }]}
@@ -385,11 +302,11 @@ function BounceButton({ label, onPress, search }: { label: string; onPress: () =
         />
         <Icon
           name="search"
-          size={18}
+          size={20}
           color={tokens.text}
           style={styles.searchIcon}
         />
-        <Text style={styles.searchText}>SEARCH</Text>
+        <Text style={styles.searchText}>Search Location</Text>
       </Animated.View>
     </Pressable>
   );
@@ -400,10 +317,14 @@ function ActionTile({
   icon,
   label,
   onPress,
+  emergency,
+  hint,
 }: {
   icon: string;
   label: string;
   onPress: () => void;
+  emergency?: boolean;
+  hint?: string;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -446,12 +367,19 @@ function ActionTile({
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        android_ripple={{ color: "#f2a90022" }}
+        android_ripple={{ color: "#1B3A6B22" }}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint={hint}
       >
         <Animated.View
-          style={[styles.tileOuter, { transform: [{ scale }] }]}
+          style={[
+            styles.tileOuter,
+            emergency && styles.tileOuterEmergency,
+            { transform: [{ scale }] },
+          ]}
         >
-          <View style={styles.tileInner}>
+          <View style={[styles.tileInner, emergency && styles.tileInnerEmergency]}>
             <Animated.View
               pointerEvents="none"
               style={[styles.tilePressOverlay, { opacity: overlayOpacity }]}
@@ -459,12 +387,12 @@ function ActionTile({
 
             <Icon
               name={icon}
-              size={28}
-              color="#071a2a"
+              size={40}
+              color="#ede5e5"
               style={styles.tileIcon}
             />
 
-            <Text style={styles.tileText}>{label}</Text>
+            <Text style={[styles.tileText, emergency && styles.tileTextEmergency]}>{label}</Text>
           </View>
         </Animated.View>
       </Pressable>
@@ -475,13 +403,21 @@ function ActionTile({
 /* TOKENS */
 
 const tokens = {
-  bg: "#071a2a",
+  bg: "#000000",
   tile: "#0b0f14",
   card: "#0d141c",
-  text: "#e8eef6",
+  surface: "#151b24",
+  modalBg: "#0f1e2e",
+  modalField: "#162233",
+  text: "#ede5e5",
   muted: "#b8c6d4",
-  gold: "#f2a900",
+  blue: "#5B9BD5",
   green: "#2ecc71",
+  border: "rgba(255,255,255,0.14)",
+  accentBorder: "rgba(91,155,213,0.4)",
+  accentBorderSoft: "rgba(91,155,213,0.32)",
+  accentDivider: "rgba(91,155,213,0.22)",
+  accentResult: "rgba(91,155,213,0.28)",
 };
 
 /* STYLES */
@@ -496,11 +432,6 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 12,
-  },
-
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
   },
 
   pageScroll: {
@@ -521,24 +452,19 @@ const styles = StyleSheet.create({
 
   // Search button styling
   searchButton: {
-   width: "100%",
-  backgroundColor: "#12314a",
+  width: "100%",
+  backgroundColor: tokens.surface,
   borderWidth: 2,
-  borderColor: tokens.gold,
-  borderRadius: 18,
+  borderColor: tokens.border,
+  borderRadius: 10,
   paddingVertical: 18,
   paddingHorizontal: 20,
   flexDirection: "row",
   alignItems: "center",
-  justifyContent: "center",
+  justifyContent: "flex-start",
   gap: 10,
   marginBottom: 12,
   overflow: "hidden",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.18,
-  shadowRadius: 8,
-  elevation: 5,
   },
 
   // Search button icon
@@ -554,9 +480,9 @@ const styles = StyleSheet.create({
 
   // Search button text
   searchText: {
-    color: tokens.text,
+    color: "#ede5e5",
     fontSize: 17,
-    fontWeight: "800",
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
 
@@ -577,39 +503,47 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center",
     marginBottom: 22,
     gap: 10,
   },
 
   // Feature card container
   tile: {
-    width: "48%",
+    width: "100%",
     marginBottom:8,
   },
 
   // Feature card outer border
-  tileOuter: {
-    borderWidth: 2,
-    borderColor: tokens.gold,
-    borderRadius: 20,
-    shadowColor: tokens.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 6,
-  },
+  tileOuter: {},
+
+  // Emergency tile outer border — red instead of blue
+  tileOuterEmergency: {},
 
   // Feature card content
   tileInner: {
     width: "100%",
-    backgroundColor: tokens.gold,
-    borderRadius: 20,
-    minHeight: 120,
-    paddingVertical: 20,
+    height: 200,
+    backgroundColor: "#2e59a9",
+    borderWidth: 2,
+    borderColor: tokens.border,
+    borderRadius: 18,
+    paddingVertical: 28,
     paddingHorizontal: 12,
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     overflow: "hidden",
+  },
+
+  // Emergency tile content: red rectangle, closer in size to Camera so it reads as
+  // equally important rather than an afterthought
+  tileInnerEmergency: {
+    aspectRatio: undefined,
+    height: 160,
+    backgroundColor: "#c55353",
+    borderColor: "#942121",
+    paddingVertical: 20,
   },
 
   tilePressOverlay: {
@@ -622,106 +556,16 @@ const styles = StyleSheet.create({
 
   // Feature card title
   tileText: {
-    color: "#071a2a",
-    fontSize: 13,
+    color: "#ede5e5",
+    fontSize: 18,
     fontWeight: "800",
     textAlign: "center",
     letterSpacing: 0.5,
   },
 
-// Vision Assist section container
- visionWrapper: {
-  backgroundColor: "#0b1520",
-  borderRadius: 20,
-  padding: 16,
-  marginTop: 8,
-  marginBottom: 12,
-
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.25,
-  shadowRadius: 8,
-  elevation: 5,
-},
-
-  // Highlight Vision Assist when active
-visionActive: {
-  borderWidth: 2,
-  borderColor: tokens.gold,
-},
-
- // Vision header layout
-visionRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "space-between",
-  marginBottom: 14,
-},
-
-  // Vision Assist heading
-visionTitle: {
-  color: tokens.text,
-  fontSize: 22,
-  fontWeight: "900",
-  letterSpacing: 0.8,
-},
-
-  // Vision toggle layout
-visionToggle: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 10,
-},
-
-  // Toggle status text
-visionToggleText: {
-  color: tokens.text,
-  fontSize: 15,
-  fontWeight: "700",
-},
-
-  visionCard: {
-    width: "100%",
-    minHeight: 220,
-    flex: 1,
-    backgroundColor: "#0d1f32",
-    borderWidth: 1.5,
-    borderColor: "rgba(242,169,0,0.4)",
-    borderRadius: 18,
-    padding: 10,
-    marginBottom: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-
-  visionInner: {
-    flex: 1,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "#0a121a",
-  },
-
-  previewPlaceholder: {
-    minHeight: 190,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 20,
-  },
-
-  previewText: {
-    color: tokens.text,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-
-  previewSubtext: {
-    color: tokens.muted,
-    fontSize: 12,
-    textAlign: "center",
+  // Emergency tile text — white for contrast on red
+  tileTextEmergency: {
+    color: "#ede5e5",
   },
 
   // ─── Modal ───
@@ -736,12 +580,12 @@ visionToggleText: {
   modalCard: {
     width: "100%",
     maxWidth: 420,
-    backgroundColor: "#0f1e2e",
+    backgroundColor: tokens.modalBg,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: "rgba(242,169,0,0.4)",
+    borderColor: tokens.accentBorder,
     overflow: "hidden",
-    shadowColor: tokens.gold,
+    shadowColor: tokens.blue,
     shadowOpacity: 0.2,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 8 },
@@ -759,21 +603,21 @@ visionToggleText: {
   modalTitle: {
     color: tokens.text,
     fontSize: 20,
-    fontWeight: "900",
+    fontWeight: "800",
     flex: 1,
   },
 
   modalDivider: {
     height: 1,
-    backgroundColor: "rgba(242,169,0,0.2)",
+    backgroundColor: tokens.accentDivider,
   },
 
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#162233",
+    backgroundColor: tokens.modalField,
     borderWidth: 1.5,
-    borderColor: "rgba(242,169,0,0.35)",
+    borderColor: tokens.accentBorderSoft,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 13,
@@ -788,10 +632,10 @@ visionToggleText: {
   },
 
   resultCard: {
-    backgroundColor: "#162233",
+    backgroundColor: tokens.modalField,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "rgba(242,169,0,0.25)",
+    borderColor: tokens.accentResult,
     padding: 16,
     alignItems: "center",
     gap: 8,
@@ -800,7 +644,7 @@ visionToggleText: {
   resultTitle: {
     color: tokens.text,
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: "800",
     textAlign: "center",
   },
 
@@ -835,16 +679,16 @@ visionToggleText: {
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#162233",
+    backgroundColor: tokens.modalField,
     borderWidth: 1.5,
-    borderColor: "rgba(242,169,0,0.35)",
+    borderColor: tokens.accentBorderSoft,
     borderRadius: 14,
     paddingVertical: 14,
   },
 
-  modeBtnGold: {
-    backgroundColor: tokens.gold,
-    borderColor: tokens.gold,
+  modeBtnblue: {
+    backgroundColor: tokens.blue,
+    borderColor: tokens.blue,
   },
 
   modeBtnDisabled: {
@@ -854,7 +698,7 @@ visionToggleText: {
   modeBtnText: {
     color: tokens.text,
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "700",
     letterSpacing: 0.6,
   },
 

@@ -124,7 +124,6 @@ export default function PlacesPage() {
           appTitle="WalkBuddy"
           onPressProfile={() => router.push("/profile" as any)}
           showDivider
-          showLocation
         />
 
         {/* Section Title */}

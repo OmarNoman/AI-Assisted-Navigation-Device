@@ -175,7 +175,6 @@ export default function SearchPage() {
           appTitle="WalkBuddy"
           onPressProfile={() => router.push("/profile" as any)}
           showDivider
-          showLocation
         />
 
         <View style={{ height: 4 }} />

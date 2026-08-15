@@ -172,7 +172,6 @@ export default function FavouritesPage() {
           greeting="Favourites"
           appTitle="WalkBuddy"
           showDivider
-          showLocation
         />
 
         {/* Add‑favourite toggle button */}

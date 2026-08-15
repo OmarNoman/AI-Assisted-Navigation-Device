@@ -1,23 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, Pressable, StyleSheet, Animated, Easing } from "react-native";
-import Icon from "react-native-vector-icons/FontAwesome";
+import Icon from "react-native-vector-icons/Ionicons";
 import { useSegments } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// `icon` is the solid/filled Ionicons name — the outline variant is
+// derived by appending "-outline" for inactive tabs.
 const TABS = [
   { icon: "home", route: "index" },
   { icon: "camera", route: "camera" },
-  { icon: "building", route: "indoor" },
-  { icon: "road", route: "exterior" },
+  { icon: "business", route: "indoor" },
+  { icon: "navigate", route: "exterior" },
   { icon: "book", route: "audiobooks" },
-  { icon: "question-circle", route: "ask-a-friend-web" },
+  { icon: "help-circle", route: "ask-a-friend-web" },
   { icon: "map", route: "places" },
-  { icon: "location-arrow", route: "predictive-path" },
+  { icon: "compass", route: "predictive-path" },
 ];
 
 const BAR_SIDE_PADDING = 8;
 
 export default function Footer({ navigation }: any) {
   const segments = useSegments();
+  const insets = useSafeAreaInsets();
   const [barWidth, setBarWidth] = useState(0);
 
   const usable = segments.filter((s) => !s.startsWith("(") && s.length > 0);
@@ -66,7 +70,7 @@ export default function Footer({ navigation }: any) {
   const isActive = (routeName: string) => currentRoute === routeName;
 
   return (
-    <View style={styles.footWrap}>
+    <View style={[styles.footWrap, { paddingBottom: insets.bottom }]}>
       <View
         style={styles.bottomBar}
         onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
@@ -75,7 +79,7 @@ export default function Footer({ navigation }: any) {
           <Animated.View
             pointerEvents="none"
             style={[
-              styles.activePill,
+              styles.activeLine,
               {
                 width: pillWidth,
                 transform: [{ translateX }],
@@ -94,9 +98,9 @@ export default function Footer({ navigation }: any) {
             onPress={() => navigation.navigate(tab.route)}
           >
             <Icon
-              name={tab.icon}
+              name={isActive(tab.route) ? tab.icon : `${tab.icon}-outline`}
               size={26}
-              color={isActive(tab.route) ? "#FFFFFF" : "#FCA311"}
+              color={isActive(tab.route) ? "#5B9BD5" : "#B0B3B8"}
             />
           </Pressable>
         ))}
@@ -109,7 +113,7 @@ const styles = StyleSheet.create({
   footWrap: {
     width: "100%",
     paddingHorizontal: 14,
-    backgroundColor: "#0D1B2A",
+    backgroundColor: "#000000",
   },
 
   bottomBar: {
@@ -117,13 +121,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    backgroundColor: "#0D1B2A",
-    borderColor: "#FCA311",
-    borderRadius: 999,
-    borderWidth: 2,
     paddingVertical: 14,
     paddingHorizontal: BAR_SIDE_PADDING,
-    marginVertical: 20,
+    marginTop: 5,
+    marginBottom: 6,
     overflow: "hidden",
   },
 
@@ -132,24 +133,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,
-    paddingVertical: 12,
   },
 
-  activePill: {
+  activeLine: {
     position: "absolute",
     left: 0,
-    top: 3,
-    bottom: 3,
-    borderRadius: 999,
-    backgroundColor: "rgba(252, 163, 17, 0.18)",
-    borderWidth: 1,
-    borderColor: "rgba(252, 163, 17, 0.55)",
+    bottom: 0,
+    height: 3.5,
+    borderRadius: 2,
+    backgroundColor: "#5B9BD5",
 
-    // stronger soft glow
-    shadowColor: "#FCA311",
+    // soft glow
+    shadowColor: "#5B9BD5",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.65,
-    shadowRadius: 12,
+    shadowRadius: 6,
     elevation: 10,
   },
 

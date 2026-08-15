@@ -597,7 +597,7 @@ export default function ProfilePage() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={[styles.content, { width: contentWidth }]}>
-          <HomeHeader appTitle="WalkBuddy" showDivider showLocation={true} />
+          <HomeHeader appTitle="WalkBuddy" showDivider />
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
