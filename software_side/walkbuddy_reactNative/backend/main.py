@@ -52,8 +52,14 @@ _EXPECTED_MODEL_SHA256_ENV = "WALKBUDDY_EXPECTED_MODEL_SHA256"
 
 
 def _resolve_expected_model_sha256() -> str | None:
-    """Return the configured expected SHA-256, or None if it is not set."""
-    env_value = os.environ.get(_EXPECTED_MODEL_SHA256_ENV, "").strip()
+    """Return the configured expected SHA-256, or None if it is not set.
+
+    This is the single normalization point for the expected checksum: it
+    strips whitespace and lower-cases hex digits so that every consumer
+    (readiness checks, checksum verification, MLRuntimeState) compares the
+    same canonical value and can never disagree over formatting alone.
+    """
+    env_value = os.environ.get(_EXPECTED_MODEL_SHA256_ENV, "").strip().lower()
     return env_value or None
 
 
@@ -213,7 +219,7 @@ async def lifespan(app: FastAPI):
     # Runtime state is reset for each application startup and is shared by
     # REST and WebSocket inference worker threads.
     app.state.ml_runtime = MLRuntimeState(
-        expected_model_sha256=os.environ.get("WALKBUDDY_EXPECTED_MODEL_SHA256")
+        expected_model_sha256=_resolve_expected_model_sha256()
     )
 
     # --- init DB ---
@@ -366,7 +372,7 @@ app = FastAPI(
 app.state.yolo = None
 app.state.ocr_reader = None
 app.state.ml_runtime = MLRuntimeState(
-    expected_model_sha256=os.environ.get("WALKBUDDY_EXPECTED_MODEL_SHA256")
+    expected_model_sha256=_resolve_expected_model_sha256()
 )
 
 # =========================
